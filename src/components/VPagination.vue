@@ -1,6 +1,9 @@
 <template>
   <div class="container">
     <div>
+      <v-search @input="onSearch" />
+    </div>
+    <div>
       <v-ship v-for="ship in shipList" :key="ship.id" :shipData="ship" />
     </div>
     <div class="container__pagination">
@@ -14,17 +17,13 @@
 <script>
 import VShip from "./VShip.vue";
 import { starShipsList, deepClone } from "@/helpers";
+import VSearch from "@/components/VSearch.vue";
 
 export default {
   name: "v-list",
-  props: {
-    filteredShips: {
-      type: Array,
-      required: true,
-    },
-  },
   components: {
     VShip,
+    VSearch,
   },
   data() {
     return {
@@ -40,12 +39,6 @@ export default {
       return `${this.currentPage} of ${this.totalPages}`;
     },
   },
-
-  watch: {
-    filteredShips(newValue) {
-      this.shipList = newValue;
-    },
-  },
   methods: {
     paginate() {
       const shipsPerPage = this.shipsPerPage;
@@ -53,8 +46,7 @@ export default {
         (this.currentPage - 1) * shipsPerPage.length,
         this.currentPage * shipsPerPage.length
       );
-      this.shipsPerPage = deepClone(shipList);
-      this.$emit("on-ships-fetch", this.shipsPerPage);
+      this.shipList = shipList;
     },
     decrementPage() {
       this.currentPage = Math.max(this.currentPage - 1, 1);
@@ -63,6 +55,12 @@ export default {
     incrementPage() {
       this.currentPage = Math.min(this.currentPage + 1, this.totalPages);
       this.paginate();
+    },
+    onSearch(value) {
+      const filteredShips = this.totalListShips.filter((shipIterator) =>
+        shipIterator.name.toLowerCase().includes(value)
+      );
+      this.shipList = filteredShips;
     },
   },
   async mounted() {
@@ -73,9 +71,8 @@ export default {
     this.totalPages = Math.ceil(
       this.shipList.length / this.shipsPerPage.length
     );
-    console.log(this.shipList);
     this.totalListShips = this.shipList;
-    this.$emit("on-ships-fetch", this.shipsPerPage);
+    this.shipList = this.shipsPerPage;
   },
 };
 </script>
